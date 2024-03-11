@@ -106,12 +106,10 @@ void readfile(const char* filename)
           } else {
             validinput = readvals(s, 8, values); // Position/color for lts.
             if (validinput) {
-
-              // YOUR CODE FOR HW 2 HERE. 
-              // Note that values[0...7] shows the read in values 
-              // Make use of lightposn[] and lightcolor[] arrays in variables.h
-              // Those arrays can then be used in display too.  
-
+              for (int i = 0; i < 4; i++) {
+                lightposn[4*numused + i] = values[i];
+                lightcolor[4*numused + i] = values[4 + i];
+              }
               ++numused; 
             }
           }
@@ -164,13 +162,12 @@ void readfile(const char* filename)
         } else if (cmd == "camera") {
           validinput = readvals(s,10,values); // 10 values eye cen up fov
           if (validinput) {
-
-            // YOUR CODE FOR HW 2 HERE
-            // Use all of values[0...9]
-            // You may need to use the upvector fn in Transform.cpp
-            // to set up correctly. 
-            // Set eyeinit upinit center fovy in variables.h 
-
+            eyeinit = vec3(values[0], values[1], values[2]);
+            center = vec3(values[3],values[4],values[5]);
+            upinit = vec3(values[6],values[7],values[8]);
+            fovy = values[9];
+            //make it orthogonal
+            upinit = Transform::upvector(upinit,eyeinit);
           }
         }
 
@@ -210,40 +207,41 @@ void readfile(const char* filename)
             ++numobjects; 
           }
         }
-
+        //build relevant matrix and put it in the stack
         else if (cmd == "translate") {
           validinput = readvals(s,3,values); 
           if (validinput) {
-
             // YOUR CODE FOR HW 2 HERE.  
             // Think about how the transformation stack is affected
             // You might want to use helper functions on top of file. 
             // Also keep in mind what order your matrix is!
-
+            mat4 M = Transform::translate(values[0],values[1],values[2]);
+            rightmultiply(M, transfstack);
           }
         }
         else if (cmd == "scale") {
           validinput = readvals(s,3,values); 
           if (validinput) {
-
             // YOUR CODE FOR HW 2 HERE.  
             // Think about how the transformation stack is affected
             // You might want to use helper functions on top of file.  
             // Also keep in mind what order your matrix is!
-
+            mat4 M = Transform::scale(values[0],values[1],values[2]);
+            rightmultiply(M, transfstack);
           }
         }
         else if (cmd == "rotate") {
           validinput = readvals(s,4,values); 
           if (validinput) {
-
             // YOUR CODE FOR HW 2 HERE. 
             // values[0..2] are the axis, values[3] is the angle.  
             // You may want to normalize the axis (or in Transform::rotate)
             // See how the stack is affected, as above.  
             // Note that rotate returns a mat3. 
             // Also keep in mind what order your matrix is!
-
+            vec3 axis = vec3(values[0],values[1],values[2]);
+            mat4 M = mat4(Transform::rotate(values[3],axis));
+            rightmultiply(M,transfstack);
           }
         }
 
@@ -252,7 +250,7 @@ void readfile(const char* filename)
           transfstack.push(transfstack.top()); 
         } else if (cmd == "popTransform") {
           if (transfstack.size() <= 1) {
-            cerr << "Stack has no elements.  Cannot Pop\n"; 
+            cerr << "Stack has no elements. Cannot Pop\n"; 
           } else {
             transfstack.pop(); 
           }
@@ -278,6 +276,6 @@ void readfile(const char* filename)
     glEnable(GL_DEPTH_TEST);
   } else {
     cerr << "Unable to Open Input Data File " << filename << "\n"; 
-    throw 2; 
+    throw 2;
   }
 }
