@@ -9,7 +9,7 @@ Pixel RayTracer::traceRay(Ray r) {
     double t;
     for (auto shape : scene->shapes) {
         Intersection currInter = shape->isIntersecting(r);
-        if (shape->isIntersecting(r)) {
+        if (currInter) {
             float currDist = distance(r->position, inter->position); 
             if (currDist < closestDist) {
                 closestDist = currDist;

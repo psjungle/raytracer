@@ -30,19 +30,13 @@ class Intersection {
     public:
     vec3 position;
     vec3 normal;
-    Shape* shape;
-    bool isIntersecting;
     Intersection() {
         this->position = vec3(0, 0, 0);
         this->normal = vec3(0, 0, 0);
-        this->shape = nullptr;
-        this->isIntersecting = false;
     };
     Intersection(vec3 position, vec3 normal, Shape* shape) {
         this->position = position;
         this->normal = normal;
-        this->shape = shape;
-        this->isIntersecting = true;
     };
 };
 
@@ -51,7 +45,7 @@ class Shape {
         Shape(){};
         virtual Intersection isIntersecting(Ray r);
         virtual vec3 computeNormal(vec3 dir){ return Intersection(); };
-        virtual Pixel findColor(Intersection inter) { return vec3(0, 0, 0) };
+        virtual Pixel findColor(Intersection inter) { return vec3(0, 0, 0); };
 };
 
 class Image {
