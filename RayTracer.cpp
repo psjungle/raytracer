@@ -2,7 +2,7 @@
 
 using namespace glm;
 
-Pixel RayTracer::traceRay(Ray r) {
+PixelColor RayTracer::traceRay(Ray r) {
     float closestDist = INFINITY;
     Intersection closestInter;
     Shape* hitShape = nullptr;
@@ -22,5 +22,5 @@ Pixel RayTracer::traceRay(Ray r) {
     if (hitShape) {
         return hitShape->findColor(closestInter);
     }
-    return Pixel(0, 0, 0);
+    return PixelColor(0, 0, 0);
 }

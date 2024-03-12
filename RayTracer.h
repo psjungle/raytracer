@@ -7,7 +7,7 @@ using namespace std;
 using namespace glm;
 
 
-class Pixel;
+class PixelColor;
 class Intersection;
 class Shape;
 class Image;
@@ -16,10 +16,10 @@ class Camera;
 class Ray;
 class RayTracer;
 
-class Pixel {
+class PixelColor {
     public:
         double r, g, b;
-        Pixel(double r, double g, double b) {
+        PixelColor(double r, double g, double b) {
             this->r = r;
             this->g = g;
             this->b = b;
@@ -42,16 +42,17 @@ class Intersection {
 
 class Shape {
     public:
+        PixelColor ambient;
         Shape(){};
-        virtual Intersection isIntersecting(Ray r);
-        virtual vec3 computeNormal(vec3 dir){ return Intersection(); };
-        virtual Pixel findColor(Intersection inter) { return Pixel(0, 0, 0); };
+        virtual Intersection isIntersecting(Ray r) { return Intersection(); };
+        virtual vec3 computeNormal(vec3 dir){ return vec3(0, 0, 0); };
+        PixelColor findColor(Intersection inter);
 };
 
 class Image {
     private:
         int width, height;
-        vector<vector<Pixel>> pixels;
+        vector<vector<PixelColor>> pixels;
     public:
         Image(int width, int height);
         void setPixel(int x, int y, double r, double g, double b);
@@ -102,5 +103,5 @@ class RayTracer {
     Scene* scene;
     public:
         RayTracer(Scene* scene){ this->scene = scene; };
-        Pixel traceRay(Ray r);
+        PixelColor traceRay(Ray r);
 };

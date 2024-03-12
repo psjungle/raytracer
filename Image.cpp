@@ -6,7 +6,7 @@ using namespace std;
 Image::Image(int width, int height) {
     this->width = width;
     this->height = height;
-    this->pixels = vector<vector<Pixel>> (height, vector<Pixel>(width, Pixel(0, 0, 0)));
+    this->pixels = vector<vector<PixelColor>> (height, vector<PixelColor>(width, PixelColor(0, 0, 0)));
 }
 
 void Image::setPixel(int x, int y, double r, double g, double b) {

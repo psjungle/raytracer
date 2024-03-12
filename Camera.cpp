@@ -16,12 +16,12 @@ Camera::Camera(vec3 cameraPosition, vec3 upVector, vec3 lookAt, float fovy, int 
     fovx = 2 * atan(width / 2);
 }
 
-Ray Camera::makeRay(Pixel* p) {
+Ray Camera::makeRay(int x, int y) {
     int hWidth = this->width / 2;
     int hHeight = this->height / 2;
 
-    float alpha = -tan(this->fovx / 2) * (p->y - hWidth) / hWidth;
-    float beta = tan(this->fovy / 2) * (hHeight / 2 - p->x)  / hHeight;
+    float alpha = -tan(this->fovx / 2) * (y - hWidth) / hWidth;
+    float beta = tan(this->fovy / 2) * (hHeight / 2 - x)  / hHeight;
     vec3 dir = normalize(alpha * (this->u) + beta * (this->v) - w);
     return Ray(this->position, dir);
 }
