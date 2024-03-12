@@ -34,7 +34,7 @@ grader.o: UCSD/grader.cpp UCSD/grader.h
 Geometry.o: Geometry.cpp Geometry.h Transform.h variables.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c Geometry.cpp
 clean: 
-	$(RM) *.o transforms *.png
+	$(RM) *.o raytracer *.png *.txt
 
 
  
