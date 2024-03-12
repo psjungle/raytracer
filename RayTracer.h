@@ -44,9 +44,9 @@ class Shape {
     public:
         PixelColor ambient;
         Shape(){};
-        virtual Intersection isIntersecting(Ray r) { return Intersection(); };
-        virtual vec3 computeNormal(vec3 dir){ return vec3(0, 0, 0); };
         PixelColor findColor(Intersection inter);
+        virtual vec3 computeNormal(vec3 dir){ return vec3(0, 0, 0); };
+        virtual Intersection isIntersecting(Ray r) { return Intersection(); };
 };
 
 class Image {
