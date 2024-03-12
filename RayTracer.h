@@ -45,7 +45,7 @@ class Shape {
         Shape(){};
         virtual Intersection isIntersecting(Ray r);
         virtual vec3 computeNormal(vec3 dir){ return Intersection(); };
-        virtual Pixel findColor(Intersection inter) { return vec3(0, 0, 0); };
+        virtual Pixel findColor(Intersection inter) { return Pixel(0, 0, 0); };
 };
 
 class Image {
