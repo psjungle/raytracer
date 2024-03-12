@@ -1,90 +1,72 @@
-#include <RayTracer.h>
+#include "RayTracer.h"
+#include <iostream>
+#include <string>
 
 using namespace glm;
+using namespace std;
 
-Pixel Shape::findColor(Intersection inter) {
+PixelColor Shape::findColor(Intersection inter) {
     return this->ambient;
 }
 
-class Triangle : public Triangle {
-    private:
-        vec3 A;
-        vec3 B;
-        vec3 C;
-    public:
-        Triangle(vec3 A, vec3 B, vec3 C, PixelColor ambient) {
-            this->A = A;
-            this->B = B;
-            this->C = C;
-            this->ambient = ambient;
-        }
-
-        vec3 computeNormal(vec3 dir) {
-            return normalize(cross((B - A), (C - A)));
-        }
-
-        Intersection isIntersecting(Ray r) {
-            vec3 normal = this->computeNormal(vec3(0, 0, 0));
-            float t = dot(normal, r.position - A) / dot(normal, r.dir) * -1;
-            vec3 pos = r.position + t * r.dir;
-            if (t >= 0 &&
-                dot(cross(B - A, pos - A), normal) >= 0 &&
-                dot(cross(C - B, pos - B), normal) >= 0  &&
-                dot(cross(A - C, pos - C), normal) >= 0) {
-                return Intersection(pos, normal);
-            }
-            return NULL;
-        }
-
+vec3 Triangle::computeNormal(vec3 dir) {
+    return normalize(cross(B - A, C - A));
 }
 
-class Sphere : public Shape {
-    private:
-        vec3 center;
-        float radius;
-        mat4 M;
-    public:
-        Sphere(vec3 center, float radius, mat4 M, PixelColor ambient) {
-            this->center = center;
-            this->radius = radius;
-            this->M = M;
-            this->ambient = ambient;
-        }
+Intersection Triangle::isIntersecting(Ray r) {
+    vec3 normal = this->computeNormal(vec3(0, 0, 0));
+    float t = dot(normal, r.origin - A) / dot(normal, r.dir) * -1;
+    //cout << r.origin[0] << " " << r.origin[1] << " " << r.origin[2] << endl;
+    //cout << r.dir[0] << " " << r.dir[1] << " " << r.dir[2] << endl;
+    vec3 pos = r.origin + t * r.dir;
+    //cout << t << endl;
+    cout << dot(cross((B - A), (pos - A)), normal) << endl;
+    if ((t >= 0) &&
+        (dot(cross((B - A), (pos - A)), normal) >= 0) &&
+        (dot(cross((C - B), (pos - B)), normal) >= 0)  &&
+        (dot(cross((A - C), (pos - C)), normal) >= 0)) {
+        cout << "is intersecting" << endl;
+        return Intersection(pos, normal, this);
+    }
+    cout << "is not intersectiong" << endl;
+    return Intersection();
+}
 
-        vec3 computeNormal(vec3 dir) {
-            mat4 invM = inverse(this->M);
-            vec3 temp = vec3(invM * vec3(dir, 1)) - this->center;
-            temp = vec3(transpose(invM) * vec4(temp, 0));
-            return normalize(temp);
-        }
 
-        Intersection isIntersecting(Ray r) {
-            Ray rt = r.transform(inverse(this->M));
+vec3 Sphere::computeNormal(vec3 dir) {
+    mat4 invM = inverse(this->M);
+    vec3 temp = vec3(invM * vec4(dir, 1)) - this->center;
+    temp = vec3(transpose(invM) * vec4(temp, 0));
+    return normalize(temp);
+}
 
-            float a = dot(rt.dir, rt.dir);
-            float b = dot(2 * rt.dir, rt.position - this->center);
-            float c = dot(rt.pos - center, rt.pos - center) - (radius * radius);
-            float discr = b * b - 4 * a * c;
+Intersection Sphere::isIntersecting(Ray r) {
+    Ray rt = r.transform(inverse(this->M));
 
-            if (discr < 0) return NULL;
+    float a = dot(rt.dir, rt.dir);
+    float b = dot((float) 2 * rt.dir, rt.origin - this->center);
+    float c = dot(rt.origin - center, rt.origin - center) - (radius * radius);
+    float discr = b * b - 4 * a * c;
 
-            float t;
-            float t1 = -b + sqrt(discr) / (2 * a);
-            float t2 = -b - sqrt(discr) / (2 * a);
+    if (discr < 0) return Intersection();
 
-            if (t1 > 0 && t2 > 0) {
-                t = min(t1, t2);
-            }
-            else if (t1 > 0 || t2 > 0) {
-                t = (t1 > 0) ? t1 : t2;
-            }
-            else {
-                return NULL;
-            }
+    float t;
+    float t1 = -b + sqrt(discr) / (2 * a);
+    float t2 = -b - sqrt(discr) / (2 * a);
 
-            vec3 pos = rt.position + t * rt.dir;
-            pos = vec3(this->M * vec4(pos, 1));
-            vec3 normal = this->computeNormal(pos);
-            return Intersection(pos, normal);
-        }
+    if (t1 > 0 && t2 > 0) {
+        t = std::min(t1, t2);
+    }
+    else if (t1 > 0 || t2 > 0) {
+        t = (t1 > 0) ? t1 : t2;
+    }
+    else {
+        cout << "sphere no hit" << endl;
+        return Intersection();
+    }
+
+    vec3 pos = rt.origin + t * rt.dir;
+    pos = vec3(this->M * vec4(pos, 1));
+    vec3 normal = this->computeNormal(pos);
+    return Intersection(pos, normal, this);
 }

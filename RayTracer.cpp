@@ -1,17 +1,20 @@
-#include <RayTracer.h>
+#include "RayTracer.h"
+#include <iostream>
+#include <string>
 
 using namespace glm;
+using namespace std;
 
 PixelColor RayTracer::traceRay(Ray r) {
-    float closestDist = INFINITY;
+    float closestDist = -1;
     Intersection closestInter;
     Shape* hitShape = nullptr;
     double t;
     for (auto shape : scene->shapes) {
         Intersection currInter = shape->isIntersecting(r);
-        if (currInter) {
-            float currDist = distance(r->position, inter->position); 
-            if (currDist < closestDist) {
+        if (currInter.shape != nullptr) {
+            float currDist = distance(r.origin, currInter.position); 
+            if (closestDist < 0 || currDist < closestDist) {
                 closestDist = currDist;
                 closestInter = currInter;
                 hitShape = shape;
@@ -19,8 +22,11 @@ PixelColor RayTracer::traceRay(Ray r) {
         }
     }
 
-    if (hitShape) {
+    if (hitShape != nullptr) {
+        cout << "hit" << endl;
         return hitShape->findColor(closestInter);
     }
+
+    cout << "no hit" << endl;
     return PixelColor(0, 0, 0);
 }

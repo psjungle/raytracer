@@ -15,24 +15,24 @@ LDFLAGS = -framework GLUT -framework OpenGL -L./lib/mac/ \
 # endif
 
 RM = /bin/rm -f 
-all: transforms
-transforms: main.o shaders.o Transform.o readfile.o display.o variables.h readfile.h shaders.h Transform.h grader.o UCSD/grader.h \
-	   Geometry.o
-	$(CC) $(CFLAGS) -o transforms shaders.o main.o Transform.o Geometry.o readfile.o display.o grader.o $(INCFLAGS) $(LDFLAGS) 
-main.o: main.cpp shaders.h Transform.h variables.h
+all: raytracer
+raytracer: main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o
+	$(CC) $(CFLAGS) -o raytracer main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o $(INCFLAGS) $(LDFLAGS) 
+main.o: main.cpp RayTracer.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c main.cpp
-shaders.o: shaders.cpp shaders.h
-	$(CC) $(CFLAGS) $(INCFLAGS) -c shaders.cpp
-readfile.o: readfile.cpp readfile.h variables.h 
-	$(CC) $(CFLAGS) $(INCFLAGS) -c readfile.cpp
-display.o: display.cpp variables.h Geometry.h
-	$(CC) $(CFLAGS) $(INCFLAGS) -c display.cpp
 Transform.o: Transform.cpp Transform.h 
 	$(CC) $(CFLAGS) $(INCFLAGS) -c Transform.cpp  
-grader.o: UCSD/grader.cpp UCSD/grader.h
-	$(CC) $(CFLAGS) $(INCFLAGS) -c UCSD/grader.cpp
-Geometry.o: Geometry.cpp Geometry.h Transform.h variables.h
-	$(CC) $(CFLAGS) $(INCFLAGS) -c Geometry.cpp
+RayTracer.o: RayTracer.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c RayTracer.cpp
+Scene.o: Scene.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c Scene.cpp
+Camera.o: Camera.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c Camera.cpp
+Image.o: Image.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c Image.cpp
+Shape.o: Shape.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c Shape.cpp
+
 clean: 
 	$(RM) *.o raytracer *.png *.txt
 

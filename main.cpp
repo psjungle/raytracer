@@ -1,240 +1,118 @@
-/******************************************************************************/
-/* This is the program skeleton for homework 2 in CSE167 by Ravi Ramamoorthi  */
-/* Extends HW 1 to deal with shading, more transforms and multiple objects    */
-/******************************************************************************/
-
-// You shouldn't have to edit this file at all!
-
 #include <iostream>
-#include <string>
 #include <fstream>
 #include <sstream>
-#include <deque>
+#include <vector>
+#include <unordered_map>
+#include <string>
 #include <stack>
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#include <OpenGL/glext.h>
-#include <GLUT/glut.h>
-#else
-#include <GL/glew.h>
-#include <GL/glut.h>
-#endif
-#include "shaders.h"
-#include "Transform.h"
-#include <FreeImage.h>
-#include "UCSD/grader.h"
-#include "Geometry.h"
+#include "RayTracer.h"
 
-using namespace std; 
+using namespace glm;
+using namespace std;
 
-// Main variables in the program.  
-#define MAINPROGRAM 
-#include "variables.h" 
-#include "readfile.h" // prototypes for readfile.cpp  
-void display(void);  // prototype for display function.  
+vector< pair<string, vector<float> > > parseFile(string path) {
+    ifstream file(path);
+    string line;
+    vector< pair<string, vector<float> > > cmds;
 
-Grader grader;
-bool allowGrader = false;
+    if (!file.is_open()) {
+        cerr << "Failed to open: "  << path << endl;
+        return cmds;
+    }
 
-// Reshapes the window
-void reshape(int width, int height){
-  w = width;
-  h = height;
+    while (getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
 
-  glViewport(0, 0, w, h);
+        string cmd;
+        vector<float> vals;
+        istringstream iss(line);
 
-  float aspect = (float) w / (float) h, zNear = 0.1, zFar = 99.0 ;
-  // I am changing the projection matrix to fit with the new window aspect ratio
-  if (useGlu) projection = glm::perspective(glm::radians(fovy),aspect,zNear,zFar) ; 
-  else {
-	  projection = Transform::perspective(fovy,aspect,zNear,zFar) ;
-  }
-  // Now send the updated projection matrix to the shader
-  glUniformMatrix4fv(projectionPos, 1, GL_FALSE, &projection[0][0]);
-}
+        iss >> cmd;
+        float val;
+        while (iss >> val) {
+            vals.push_back(val);
+        }
 
-void saveScreenshot(string fname) {
-  int pix = w * h;
-  BYTE *pixels = new BYTE[3*pix];	
-  glReadBuffer(GL_FRONT);
-  glReadPixels(0,0,w,h,GL_BGR,GL_UNSIGNED_BYTE, pixels);
+        cmds.push_back(make_pair(cmd, vals));
+    }
 
-  FIBITMAP *img = FreeImage_ConvertFromRawBits(pixels, w, h, w * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, false);
+    file.close();
+    return cmds;
 
-  std::cout << "Saving screenshot: " << fname << "\n";
-
-  FreeImage_Save(FIF_PNG, img, fname.c_str(), 0);
-  delete[] pixels;
-}
-
-
-void printHelp() {
-  std::cout << "\npress 'h' to print this message again.\n" 
-    << "press '+' or '-' to change the amount of rotation that\noccurs with each arrow press.\n" 
-    << "press 'i' to run image grader test cases\n"
-    << "press 'g' to switch between using glm::lookAt and glm::Perspective or your own LookAt.\n"       
-    << "press 'r' to reset the transformations.\n"
-    << "press 'v' 't' 's' to do view [default], translate, scale.\n"
-    << "press ESC to quit.\n" ;      
-}
-
-
-void keyboard(unsigned char key, int x, int y) {
-  switch(key) {
-    case '+':
-      amount++;
-      std::cout << "amount set to " << amount << "\n" ;
-      break;
-    case '-':
-      amount--;
-      std::cout << "amount set to " << amount << "\n" ; 
-      break;
-    case 'i':
-      if(useGlu) {
-        std::cout << "Please disable glm::LookAt by pressing 'g'"
-          << " before running tests\n";
-      }
-      else if(!allowGrader) {
-        std::cout << "Error: no input file specified for grader\n";
-      } else {
-        std::cout << "Running tests...\n";
-        grader.runTests();
-        std::cout << "Done! [ESC to quit]\n";
-      }
-      break;
-    case 'g':
-      useGlu = !useGlu;
-      reshape(w,h) ; 
-      std::cout << "Using glm::LookAt and glm::Perspective set to: " << (useGlu ? " true " : " false ") << "\n" ; 
-      break;
-    case 'h':
-      printHelp();
-      break;
-    case 27:  // Escape to quit
-      exit(0) ;
-      break ;
-    case 'r': // reset eye and up vectors, scale and translate. 
-      eye = eyeinit ; 
-      up = upinit ; 
-      amount = amountinit ;
-      transop = view ;
-      sx = sy = 1.0 ; 
-      tx = ty = 0.0 ; 
-      break ;   
-    case 'v': 
-      transop = view ;
-      std::cout << "Operation is set to View\n" ; 
-      break ; 
-    case 't':
-      transop = translate ; 
-      std::cout << "Operation is set to Translate\n" ; 
-      break ; 
-    case 's':
-      transop = scale ; 
-      std::cout << "Operation is set to Scale\n" ; 
-      break ; 
-  }
-  glutPostRedisplay();
-}
-
-//  You will need to enter code for the arrow keys 
-//  When an arrow key is pressed, it will call your transform functions
-
-void specialKey(int key, int x, int y) {
-  switch(key) {
-    case 100: //left
-      if (transop == view) Transform::left(amount, eye,  up);
-      else if (transop == scale) sx -= amount * 0.01 ; 
-      else if (transop == translate) tx -= amount * 0.01 ; 
-      break;
-    case 101: //up
-      if (transop == view) Transform::up(amount,  eye,  up);
-      else if (transop == scale) sy += amount * 0.01 ; 
-      else if (transop == translate) ty += amount * 0.01 ; 
-      break;
-    case 102: //right
-      if (transop == view) Transform::left(-amount, eye,  up);
-      else if (transop == scale) sx += amount * 0.01 ; 
-      else if (transop == translate) tx += amount * 0.01 ; 
-      break;
-    case 103: //down
-      if (transop == view) Transform::up(-amount,  eye,  up);
-      else if (transop == scale) sy -= amount * 0.01 ; 
-      else if (transop == translate) ty -= amount * 0.01 ; 
-      break;
-  }
-  glutPostRedisplay();
-}
-
-void init() {
-  // Initialize shaders
-  vertexshader = initshaders(GL_VERTEX_SHADER, "shaders/light.vert.glsl") ;
-  fragmentshader = initshaders(GL_FRAGMENT_SHADER, "shaders/light.frag.glsl") ;
-  shaderprogram = initprogram(vertexshader, fragmentshader) ; 
-  // Get locations of all uniform variables.
-  enablelighting = glGetUniformLocation(shaderprogram,"enablelighting") ;
-  lightpos = glGetUniformLocation(shaderprogram,"lightposn") ;       
-  lightcol = glGetUniformLocation(shaderprogram,"lightcolor") ;       
-  numusedcol = glGetUniformLocation(shaderprogram,"numused") ;       
-  ambientcol = glGetUniformLocation(shaderprogram,"ambient") ;       
-  diffusecol = glGetUniformLocation(shaderprogram,"diffuse") ;       
-  specularcol = glGetUniformLocation(shaderprogram,"specular") ;       
-  emissioncol = glGetUniformLocation(shaderprogram,"emission") ;       
-  shininesscol = glGetUniformLocation(shaderprogram,"shininess") ;    
-  projectionPos = glGetUniformLocation(shaderprogram, "projection");
-  modelviewPos = glGetUniformLocation(shaderprogram, "modelview");
-  // Initialize geometric shapes
-  initBufferObjects();
-  initTeapot(); initCube(); initSphere();
 }
 
 int main(int argc, char* argv[]) {
+    auto cmds = parseFile(argv[1]);
 
-  if (argc < 2) {
-    cerr << "Usage: transforms scenefile [grader input (optional)]\n"; 
-    exit(-1); 
-  }
+    Scene* scene = new Scene();
+    Camera* camera;
+    PixelColor ambient(0, 0, 0);
+    vector<vec3> vertices;
+    int count = 0;
 
-  FreeImage_Initialise();
-  glutInit(&argc, argv);
-// OSX systems require an extra window init flag
-#ifdef __APPLE__
-  glutInitDisplayMode(GLUT_3_2_CORE_PROFILE | GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-#else
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-#endif
-  glutCreateWindow("HW2: Scene Viewer");
+    stack<mat4> transfstack;
+    transfstack.push(mat4(1));
 
-#ifndef __APPLE__ // GLew not needed on OSX systems
-  GLenum err = glewInit() ; 
-  if (GLEW_OK != err) { 
-    std::cerr << "Error: " << glewGetString(err) << std::endl; 
-  } 
-#endif
+    for (auto cmd : cmds) {
+        string name = cmd.first;
 
-  init();
-  readfile(argv[1]) ; 
-  glutDisplayFunc(display);
-  glutSpecialFunc(specialKey);
-  glutKeyboardFunc(keyboard);
-  glutReshapeFunc(reshape);
-  glutReshapeWindow(w, h);
+        cout << name << endl;
+        
+        if (name == "size") {
+            scene->width = cmd.second[0];
+            scene->height = cmd.second[1];
+        }
 
-  if (argc > 2) {
-    allowGrader = true;
-    stringstream tcid;
-    tcid << argv[1] << "." << argv[2];
-    grader.init(tcid.str());
-    grader.loadCommands(argv[2]);
-    grader.bindDisplayFunc(display);
-    grader.bindSpecialFunc(specialKey);
-    grader.bindKeyboardFunc(keyboard);
-    grader.bindScreenshotFunc(saveScreenshot);
-  }
+        else if (name == "camera") {
+            vec3 cameraPosition = vec3(cmd.second[0], cmd.second[1], cmd.second[2]);
+            vec3 lookAt = vec3(cmd.second[3], cmd.second[4], cmd.second[5]);
+            vec3 upVector = vec3(cmd.second[6], cmd.second[7], cmd.second[8]);
+            float fovy = cmd.second[9];
+            camera = new Camera(cameraPosition, upVector, lookAt, fovy, scene->width, scene->height);
+            /*vec3 cameraPosition = vec3(0, 0, 4);
+            vec3 lookAt = vec3(0, 0, 0);
+            vec3 upVector = vec3(0, 1, 0);
+            float fovy = 30;*/
+            camera = new Camera(cameraPosition, upVector, lookAt, fovy, scene->width, scene->height);
+        }
 
-  printHelp();
-  glutMainLoop();
-  FreeImage_DeInitialise();
-  destroyBufferObjects();
-  return 0;
+        else if (name == "ambient") {
+            ambient.r = cmd.second[0];
+            ambient.g = cmd.second[1];
+            ambient.b = cmd.second[2];
+        }
+
+        else if (name == "maxverts") {
+            vertices = vector<vec3>((int) cmd.second[0]);
+        }
+
+        else if (name == "vertex") {
+            vertices[count] = vec3(cmd.second[0], cmd.second[1], cmd.second[2]);
+            count++;
+        }
+
+        else if (name == "tri") {
+            vec3 A = vec3(transfstack.top() * vec4(vertices[cmd.second[0]], 1));
+            vec3 B = vec3(transfstack.top() * vec4(vertices[cmd.second[1]], 1));
+            vec3 C = vec3(transfstack.top() * vec4(vertices[cmd.second[2]], 1));
+            scene->shapes.push_back(new Triangle(A, B, C, ambient));
+        }
+
+        else if (name == "sphere") {
+            vec3 center = vec3(cmd.second[0], cmd.second[1], cmd.second[2]);
+            float radius = cmd.second[3];
+            scene->shapes.push_back(new Sphere(center, radius, transfstack.top(), ambient));
+        }
+
+        else {
+            cerr << "Invalid command: " << name << endl;
+        }
+    }
+
+    Image* image = new Image(scene->width, scene->height);
+    cout << "Raytracing ..." << endl;
+    scene->render(image, camera);
+    cout << "Saving image ..." << endl;
+    image->saveImage("output.png");
+    cout << "Complete!" << endl;
 }

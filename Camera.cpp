@@ -1,27 +1,41 @@
-#include <RayTracer.h>
+#include "RayTracer.h"
 #include <math.h>
+#include <iostream>
+#include <string>
 
+using namespace std;
 using namespace glm;
 
 Camera::Camera(vec3 cameraPosition, vec3 upVector, vec3 lookAt, float fovy, int width, int height) {
+    this->position = cameraPosition;
     this->width = width;
     this->height = height;
+    //cout << "Camera position: " << cameraPosition[0] << " " << cameraPosition[1] << " " << cameraPosition[2] << endl;
+    this->w = normalize(cameraPosition - lookAt);
+    this->u = normalize(cross(this->w, upVector));
+    this->v = cross(this->w, this->u);
 
-    w = normalize(cameraPosition - lookAt);
-    u = normalize(cross(w, upVector));
-    v = cross(w, u);
+    //cout << this->v[0] << this->v[1] << this->v[2] << endl;
 
-    float z  = tan(fovy / 2);
+    this->fovy = radians(fovy);
+    float z  = tan(this->fovy / 2);
     z = (1 / z) * (height / 2);
-    fovx = 2 * atan(width / 2);
+    this->fovx = 2 * atan((width / 2) / z);
+
+    //cout << "fovx: " << this->fovx << endl;
+    //cout << "fovy: " << this->fovy << endl;
 }
 
 Ray Camera::makeRay(int x, int y) {
     int hWidth = this->width / 2;
     int hHeight = this->height / 2;
 
-    float alpha = -tan(this->fovx / 2) * (y - hWidth) / hWidth;
-    float beta = tan(this->fovy / 2) * (hHeight / 2 - x)  / hHeight;
+    float alpha = -tan(this->fovx / 2) * (x - hWidth) / hWidth;
+    float beta = tan(this->fovy / 2) * (hHeight - y) / hHeight;
     vec3 dir = normalize(alpha * (this->u) + beta * (this->v) - w);
+
+    //cout << dir[0] << " " << dir[1] << " " << dir[2] << endl;
+
+    //cout << alpha << " " << beta << endl;
     return Ray(this->position, dir);
 }
