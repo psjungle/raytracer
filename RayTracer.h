@@ -34,7 +34,7 @@ class Intersection {
         this->position = vec3(0, 0, 0);
         this->normal = vec3(0, 0, 0);
     };
-    Intersection(vec3 position, vec3 normal, Shape* shape) {
+    Intersection(vec3 position, vec3 normal) {
         this->position = position;
         this->normal = normal;
     };
