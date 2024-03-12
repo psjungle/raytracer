@@ -10,9 +10,9 @@ Image::Image(int width, int height) {
 }
 
 void Image::setPixel(int x, int y, double r, double g, double b) {
-    this->pixels[x][y].r += r;
-    this->pixels[x][y].g += g;
-    this->pixels[x][y].b += b;
+    this->pixels[y][x].r += r;
+    this->pixels[y][x].g += g;
+    this->pixels[y][x].b += b;
 }
 
 void Image::saveImage(string path) {
@@ -28,5 +28,5 @@ void Image::saveImage(string path) {
             FreeImage_SetPixelColor(image, i, j, &c);
         }
     }
-    FreeImage_Save(FIF_PNG, image, path.c_str());
+    FreeImage_Save(FIF_PNG, image, path.c_str();
 }
