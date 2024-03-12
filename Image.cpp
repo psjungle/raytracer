@@ -28,5 +28,5 @@ void Image::saveImage(string path) {
             FreeImage_SetPixelColor(image, i, j, &c);
         }
     }
-    FreeImage_Save(FIF_PNG, image, path.c_str();
+    FreeImage_Save(FIF_PNG, image, path.c_str(), 0);
 }
