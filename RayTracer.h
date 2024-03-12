@@ -1,5 +1,6 @@
 #include <math.h>
 #include <glm/glm.hpp>
+#include <vector>
 
 using namespace std;
 using namespace glm;
@@ -14,10 +15,8 @@ class RayTracer;
 
 class Pixel {
     public:
-        int x, y, r, g, b;
-        Pixel(int x, int y, int r, int g, int b) {
-            this->x = x;
-            this->y = y;
+        double r, g, b;
+        Pixel(double r, double g, double b) {
             this->r = r;
             this->g = g;
             this->b = b;
@@ -25,7 +24,13 @@ class Pixel {
 };
 
 class Image {
-
+    private:
+        int width, height;
+        vector<vector<Pixel>> pixels;
+    public:
+        Image(int width, int height);
+        void setPixel(int x, int y, double r, double g, double b);
+        void saveImage(string path);
 };
 
 class Scene {
@@ -44,7 +49,7 @@ class Camera {
     
     public:
         Camera(vec3 cameraPosition, vec3 upVector, vec3 lookAt, float fovy, int width, int height);
-        Ray makeRay(Pixel* pixel);
+        Ray makeRay(int x, int y);
 };
 
 class Ray {
@@ -55,5 +60,8 @@ class Ray {
 };
 
 class RayTracer {
-
+    
+    public:
+        RayTracer(){};
+        Pixel traceRay(Ray r);
 };
