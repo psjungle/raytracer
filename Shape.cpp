@@ -16,19 +16,15 @@ vec3 Triangle::computeNormal(vec3 dir) {
 Intersection Triangle::isIntersecting(Ray r) {
     vec3 normal = this->computeNormal(vec3(0, 0, 0));
     float t = dot(normal, r.origin - A) / dot(normal, r.dir) * -1;
-    //cout << r.origin[0] << " " << r.origin[1] << " " << r.origin[2] << endl;
-    //cout << r.dir[0] << " " << r.dir[1] << " " << r.dir[2] << endl;
     vec3 pos = r.origin + t * r.dir;
-    //cout << t << endl;
-    cout << dot(cross((B - A), (pos - A)), normal) << endl;
+
     if ((t >= 0) &&
         (dot(cross((B - A), (pos - A)), normal) >= 0) &&
         (dot(cross((C - B), (pos - B)), normal) >= 0)  &&
         (dot(cross((A - C), (pos - C)), normal) >= 0)) {
-        cout << "is intersecting" << endl;
         return Intersection(pos, normal, this);
     }
-    cout << "is not intersectiong" << endl;
+
     return Intersection();
 }
 
@@ -45,14 +41,14 @@ Intersection Sphere::isIntersecting(Ray r) {
 
     float a = dot(rt.dir, rt.dir);
     float b = dot((float) 2 * rt.dir, rt.origin - this->center);
-    float c = dot(rt.origin - center, rt.origin - center) - (radius * radius);
+    float c = dot(rt.origin - this->center, rt.origin - this->center) - (this->radius * this->radius);
     float discr = b * b - 4 * a * c;
 
     if (discr < 0) return Intersection();
 
     float t;
-    float t1 = -b + sqrt(discr) / (2 * a);
-    float t2 = -b - sqrt(discr) / (2 * a);
+    float t1 = (-b + sqrt(discr)) / (2 * a);
+    float t2 = (-b - sqrt(discr)) / (2 * a);
 
     if (t1 > 0 && t2 > 0) {
         t = std::min(t1, t2);
@@ -61,7 +57,6 @@ Intersection Sphere::isIntersecting(Ray r) {
         t = (t1 > 0) ? t1 : t2;
     }
     else {
-        cout << "sphere no hit" << endl;
         return Intersection();
     }
 
