@@ -23,10 +23,8 @@ PixelColor RayTracer::traceRay(Ray r) {
     }
 
     if (hitShape != nullptr) {
-        cout << "hit" << endl;
         return hitShape->findColor(closestInter);
     }
 
-    cout << "no hit" << endl;
     return PixelColor(0, 0, 0);
 }
