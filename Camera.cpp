@@ -27,15 +27,14 @@ Camera::Camera(vec3 cameraPosition, vec3 upVector, vec3 lookAt, float fovy, int 
 }
 
 Ray Camera::makeRay(int x, int y) {
+
     int hWidth = this->width / 2;
     int hHeight = this->height / 2;
 
-    float alpha = -tan(this->fovx / 2) * (x - hWidth) / hWidth;
-    float beta = tan(this->fovy / 2) * (hHeight - y) / hHeight;
+    float alpha = -tan(this->fovx / 2) * ((x + 0.5) - hWidth) / hWidth;
+    float beta = tan(this->fovy / 2) * (hHeight - (y + 0.5)) / hHeight;
     vec3 dir = normalize(alpha * (this->u) + beta * (this->v) - w);
 
-    //cout << dir[0] << " " << dir[1] << " " << dir[2] << endl;
 
-    //cout << alpha << " " << beta << endl;
     return Ray(this->position, dir);
 }

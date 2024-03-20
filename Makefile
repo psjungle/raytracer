@@ -16,8 +16,8 @@ LDFLAGS = -framework GLUT -framework OpenGL -L./lib/mac/ \
 
 RM = /bin/rm -f 
 all: raytracer
-raytracer: main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o
-	$(CC) $(CFLAGS) -o raytracer main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o $(INCFLAGS) $(LDFLAGS) 
+raytracer: main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o Light.o
+	$(CC) $(CFLAGS) -o raytracer main.o Transform.o RayTracer.o Scene.o Camera.o Image.o Shape.o Light.o $(INCFLAGS) $(LDFLAGS) 
 main.o: main.cpp RayTracer.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c main.cpp
 Transform.o: Transform.cpp Transform.h 
@@ -32,7 +32,8 @@ Image.o: Image.cpp RayTracer.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c Image.cpp
 Shape.o: Shape.cpp RayTracer.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c Shape.cpp
-
+Light.o: Light.cpp RayTracer.h
+	$(CC) $(CFLAGS) $(INCFLAGS) -c Light.cpp
 clean: 
 	$(RM) *.o raytracer *.png *.txt
 
