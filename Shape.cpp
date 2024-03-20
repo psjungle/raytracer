@@ -5,8 +5,44 @@
 using namespace glm;
 using namespace std;
 
-PixelColor Shape::findColor(Intersection inter) {
-    return this->ambient;
+PixelColor Shape::findColor(Intersection inter, Scene* scene, RayTracer* rt, Camera* camera) {
+
+    if (inter.shape == nullptr) {
+        return PixelColor(0, 0, 0);
+    }
+
+    PixelColor color(0, 0, 0);
+
+    /*color.r = this->ambient.r + this->emission.r;
+    color.g = this->ambient.g + this->emission.g;
+    color.b = this->ambient.b + this->emission.b;
+    return color;*/
+
+    for (auto light : scene->lights) {
+        if (!light->isBlocked(inter.position, rt)) {
+            vec3 eyeDir = normalize(camera->position - inter.position);
+            vec3 lightDir = light->computeDirection(inter.position);
+            vec3 half0 = normalize(eyeDir + lightDir);
+    
+            float shade = light->computeShade(inter.position, inter.normal);
+            PixelColor lambert(this->diffuse.r * shade, this->diffuse.g * shade, this->diffuse.b * shade);
+
+            float nDotH = dot(inter.normal, half0);
+            //cout << "nDotH: " << nDotH << endl;
+            float pow = std::pow(nDotH, this->shininess);
+            PixelColor phong(pow * this->specular.r, pow * this->specular.g, pow * this->specular.b);
+            //cout << "PHONG: " << phong.r << " " << phong.g << " " << phong.b << endl;
+
+            float atten = light->attenuation(inter.position);
+            color.r = (lambert.r + phong.r) * atten;
+            color.g = (lambert.g + phong.g) * atten;
+            color.b = (lambert.b + phong.b) * atten;
+        }
+    }
+    color.r += this->ambient.r + this->emission.r;
+    color.g += this->ambient.g + this->emission.g;
+    color.b += this->ambient.b + this->emission.b;
+    return color;
 }
 
 vec3 Triangle::computeNormal(vec3 dir) {

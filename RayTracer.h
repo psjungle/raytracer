@@ -16,6 +16,7 @@ class Scene;
 class Camera;
 class RayTracer;
 class GridCell;
+class Light;
 
 class PixelColor {
     public:
@@ -70,8 +71,13 @@ class Intersection {
 class Shape { 
     public:
         PixelColor ambient;
-        Shape(PixelColor ambient) : ambient(ambient) {};
-        PixelColor findColor(Intersection inter);
+        PixelColor diffuse;
+        PixelColor specular;
+        float shininess;
+        PixelColor emission;
+        Shape(PixelColor ambient, PixelColor diffuse, PixelColor specular, float shininess, PixelColor emission) :
+            ambient(ambient), diffuse(diffuse), specular(specular), shininess(shininess), emission(emission) {};
+        PixelColor findColor(Intersection inter, Scene* scene, RayTracer *rt, Camera* camera);
         virtual vec3 computeNormal(vec3 dir){ return vec3(0, 0, 0); };
         virtual Intersection isIntersecting(Ray r) { return Intersection(); };
         virtual void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize)= 0;
@@ -83,8 +89,8 @@ class Triangle : public Shape {
         vec3 B;
         vec3 C;
     public:
-        Triangle(vec3 A, vec3 B, vec3 C, PixelColor ambient) :
-            Shape(ambient), A(A), B(B), C(C) {};
+        Triangle(vec3 A, vec3 B, vec3 C, PixelColor ambient, PixelColor diffuse, PixelColor specular, float shininess, PixelColor emission) :
+            Shape(ambient, diffuse, specular, shininess, emission), A(A), B(B), C(C) {};
         vec3 computeNormal(vec3 dir) override;
         Intersection isIntersecting(Ray r) override;
         void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize) override {
@@ -116,8 +122,8 @@ class Sphere : public Shape {
         float radius;
         mat4 M;
     public:
-        Sphere(vec3 center, float radius, mat4 M, PixelColor ambient) :
-            Shape(ambient), center(center), radius(radius), M(M) {}
+        Sphere(vec3 center, float radius, mat4 M, PixelColor ambient, PixelColor diffuse, PixelColor specular, float shininess, PixelColor emission) :
+            Shape(ambient, diffuse, specular, shininess, emission), center(center), radius(radius), M(M) {}
         vec3 computeNormal(vec3 dir) override;
         Intersection isIntersecting(Ray r) override;
         void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize) override {
@@ -147,32 +153,75 @@ class Image {
         void saveImage(string path);
 };
 
+class RayTracer {
+    private:
+    Scene* scene;
+    public:
+        RayTracer(Scene* scene){ this->scene = scene; };
+        float isIntersecting(Ray r);
+        PixelColor traceRay(Ray r, int maxDepth, Camera* camera);
+};
+
 class Scene {
     public:
-    int width, height;
+    int width, height, maxDepth;
     vector<Shape*> shapes;
-    Scene() : width(0), height(0), shapes(vector<Shape*>()) {};
+    vector<Light*> lights;
+    Scene() : width(0), height(0), maxDepth(1), shapes(vector<Shape*>()), lights(vector<Light*>()) {};
     void render(Image* image, Camera* camera);
 };
 
+class Light {
+    public:
+        PixelColor color;
+        vec3 position;
+        Light(PixelColor color, vec3 position) : color(color), position(position) {};
+        virtual vec3 computeDirection(vec3 pos) { return vec3(0, 0, 0); };
+        virtual bool isBlocked(vec3 pos, RayTracer* rt) { return true; };
+        virtual float computeShade(vec3 v, vec3 normal) { return 0.0; };
+        virtual float attenuation(vec3 pos) { return 1.0; };
+};
+
+class Directional : public Light {
+    public:
+        Directional(PixelColor color, vec3 position) :
+            Light(color, position) {};
+        
+        vec3 computeDirection(vec3 pos) {
+            return normalize(this->position);
+        }
+
+        bool isBlocked(vec3 pos, RayTracer* rt) override;
+        float computeShade(vec3 v, vec3 normal) override;
+        float attenuation(vec3 pos) override;
+};
+
+class Point : public Light {
+    public:
+        vec3 atten;
+        Point(PixelColor color, vec3 position, vec3 atten) :
+            Light(color, position), atten(atten) {};
+
+        vec3 computeDirection(vec3 pos) {
+            return normalize(this->position - pos);
+        }
+
+        bool isBlocked(vec3 pos, RayTracer* rt) override;
+        float computeShade(vec3 v, vec3 normal) override;
+        float attenuation(vec3 pos) override;
+};
 
 class Camera {
-    private:
+    public:
         vec3 position;
         vec3 w;
         vec3 u;
         vec3 v;
         float fovx, fovy;
         int width, height;
-    public:
         Camera(vec3 cameraPosition, vec3 upVector, vec3 lookAt, float fovy, int width, int height);
         Ray makeRay(int x, int y);
 };
 
-class RayTracer {
-    private:
-    Scene* scene;
-    public:
-        RayTracer(Scene* scene){ this->scene = scene; };
-        PixelColor traceRay(Ray r);
-};
+
+
