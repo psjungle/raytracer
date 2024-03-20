@@ -15,6 +15,7 @@ class Image;
 class Scene;
 class Camera;
 class RayTracer;
+class GridCell;
 
 class PixelColor {
     public:
@@ -38,6 +39,15 @@ class Ray {
             vec3 newDir = normalize(vec3(M * vec4(this->dir, 0)));
             return Ray(newOrigin, newDir);
         }
+};
+
+class GridCell {
+public:
+    std::vector<Shape*> shapes; // List of shapes in this cell
+
+    void addShape(Shape* shape) {
+        shapes.push_back(shape);
+    }
 };
 
 class Intersection {
@@ -64,6 +74,7 @@ class Shape {
         PixelColor findColor(Intersection inter);
         virtual vec3 computeNormal(vec3 dir){ return vec3(0, 0, 0); };
         virtual Intersection isIntersecting(Ray r) { return Intersection(); };
+        virtual void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize)= 0;
 };
 
 class Triangle : public Shape {
@@ -76,6 +87,27 @@ class Triangle : public Shape {
             Shape(ambient), A(A), B(B), C(C) {};
         vec3 computeNormal(vec3 dir) override;
         Intersection isIntersecting(Ray r) override;
+        void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize) override {
+            float minXCoord = std::min(std::min(A.x, B.x), C.x);
+            float maxXCoord = std::max(std::max(A.x, B.x), C.x);
+            float minYCoord = std::min(std::min(A.y, B.y), C.y);
+            float maxYCoord = std::max(std::max(A.y, B.y), C.y);
+            float minZCoord = std::min(std::min(A.z, B.z), C.z);
+            float maxZCoord = std::max(std::max(A.z, B.z), C.z);
+            int minXIndex = static_cast<int>((minXCoord - minX) / cellSize);
+            int maxXIndex = static_cast<int>((maxXCoord - minX) / cellSize);
+            int minYIndex = static_cast<int>((minYCoord - minY) / cellSize);
+            int maxYIndex = static_cast<int>((maxYCoord - minY) / cellSize);
+            int minZIndex = static_cast<int>((minZCoord - minZ) / cellSize);
+            int maxZIndex = static_cast<int>((maxZCoord - minZ) / cellSize);
+            for (int x = std::max(0, minXIndex); x <= std::min(4, maxXIndex); ++x) {
+                for (int y = std::max(0, minYIndex); y <= std::min(4, maxYIndex); ++y) {
+                    for (int z = std::max(0, minZIndex); z <= std::min(4, maxZIndex); ++z) {
+                        grid[x][y][z].shapes.push_back(this);
+                    }
+                }
+            }
+        }
 };
 
 class Sphere : public Shape {
@@ -88,6 +120,21 @@ class Sphere : public Shape {
             Shape(ambient), center(center), radius(radius), M(M) {}
         vec3 computeNormal(vec3 dir) override;
         Intersection isIntersecting(Ray r) override;
+        void calculateIntersections(GridCell grid[5][5][5], int minX, int minY, int minZ, float cellSize) override {
+            int minXIndex = static_cast<int>((minX - this->radius) / cellSize);
+            int maxXIndex = static_cast<int>((minX + this->radius) / cellSize);
+            int minYIndex = static_cast<int>((minY - this->radius) / cellSize);
+            int maxYIndex = static_cast<int>((minY + this->radius) / cellSize);
+            int minZIndex = static_cast<int>((minZ - this->radius) / cellSize);
+            int maxZIndex = static_cast<int>((minZ + this->radius) / cellSize);
+            for (int x = std::max(0, minXIndex); x <= std::min(4, maxXIndex); ++x) {
+                for (int y = std::max(0, minYIndex); y <= std::min(4, maxYIndex); ++y) {
+                    for (int z = std::max(0, minZIndex); z <= std::min(4, maxZIndex); ++z) {
+                        grid[x][y][z].shapes.push_back(this);
+                    }
+                }
+            }
+        }
 };
 
 class Image {
